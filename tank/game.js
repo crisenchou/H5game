@@ -184,11 +184,11 @@ var Draw = {
         this.ctx.putImageData(img, x, y);
     },
         
-    //图像动画 
-    drawdynamicImag : function(img, x, y, length, size){
+    //动画效果 
+    drawdynamicImag : function(img, x, y, length, size, speed){
         setTimeout(function(){
-            Draw.drawdynamicImag(img, x, y, length, size);
-        },10);
+            Draw.drawdynamicImag(img, x, y, length, size,speed);
+        },speed);
     },
 }
 
