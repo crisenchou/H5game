@@ -10,108 +10,72 @@
 */
 
 //坐标
-var Position = {
-    x : 0,
-    y : 0,
-    init : function(x,y){
-        this.x = x;
-        this.y = y;
-    }
+var Position = function(x,y){
+    this.x = x || 0;
+    this.y = y || 0;
 }
 
 
-//坦克类
-var Tank = {
-    type : 1,//类型
-    hp : 20,//血量
-    ammo : 1,//弹药数量
-    derec : 1,//方向 1左 2上 3右 4下
-    isgod : 0,//是否无敌
-    speed : 100,//移动速度
-    postion : null,
-    shot : function(){
+var Tank = function(type, hp, derec, postion, bullet){
+    this.type = type || 1;//类型
+    this.hp = hp || 20;//血量
+    this.ammo = 1;//弹药数量
+    this.isgod = 0;//是否无敌
+    this.speed = 100;//移动速度
+    this.derec =  derec || 1;//方向
+    this.postion = postion;//依赖倒置 属性注入
+    this.bullet = bullet;//依赖倒置 属性注入
+    this.show = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo>0){
-            Bullet.init(this.derec,this.position);
-            Bullet.move();
-            this.ammo--;
         }
-    },
-    move : function(derec){
-        //移动
-        this.derec = derec;
-        //移动动画与坐标
-    },
-    create : function(type,hp,derec,speed,position){
-        this.type = type;
-        this.hp = hp;
-        this.derec = derec;
-        this.speed = speed;
-        this.position =  position;
-        return this;
-    },
-    destroyed : function(){
+	}
+
+    this.destroyed = function(){
         //阵亡
     }
+    
+    this.move = function(){
+        console.log("tank is moveing");
+    }
 }
+
 
 //子弹
-var Bullet = {
-    derec : 1,//方向
-    speed : 500,//速度
-    position : null,
-    damage : 10,
-    init : function(derec,position){
-        this.derec = derec;
-        this.position = position;
-    },
-    move : function(){
-        //移动
+var Bullet = function(speed,position,damage){
+    
+    //this.derec = derec || 1;
+    this.speed = speed || 500;
+    this.position = position;
+    this.damage = damage || 10;
+    this.move = function(derec){
+        //do smone thing
     }
 }
 
+
 //障碍
-var Barrier = {
-    type : 0,//0空 1铁 2砖 3草 4水 5泥
-    init : function(){
-        //生成障碍物
-    }
+var Barrier = function(type,isAccess){
+    this.type = type;
+    this.isAccess = isAccess;
 }
 
 
 //玩家1
-var Player1 = {
-    tank : null,
-    score : 0,
-    init : function(){
-        var type = 1,hp=20,derec=2;
-        var position = Position.init();
-        this.tank = Tank.init(type,hp,derec,position);
+var Player = function(tank){
+    this.tank = tank;
+    this.score = 0;
+    this.move = function(){
+        this.tank.move();
     }
 }
-
-//玩家2
-var Player1 = {
-    tank : null,
-    score : 0,
-    init : function(){
-        
-    }
-}
-
 
 //电脑AI
-var AI = {
-    amount : 20,//总数20
-    currentAmout : 6,
-    tanks : [],
-    init : function(){
-        this.tanks = new Array(6);
-        for(var i=0; i<6; i++){
-            var type = Helpers.random(0,4);
-            var hp = Helpers.random(0,4)*10;
-            this.tanks[i] = tank.init();
-        }
+var AI = function(tank){
+    this.tank = tank;
+    var move = function(){
+        this.tank.move();
+        //随机漫步算法
     }
 }
 
@@ -133,10 +97,9 @@ var Map = {
 var Game = {
     status : 1,
     init : function(){
-        Draw.init();
-        Map.init();
-        AI.init();
-        Player1.init(),
+        player1 = new Player(new Tank(1,10,2,new Position(100,200),123));
+        player1.move();
+        //console.log();
     },
     start : function(){
         AI.run();
@@ -145,51 +108,49 @@ var Game = {
 
 
 //画布
-var Draw = {
-    ctx : false,
-    init : function(canvas){
-        var c = document.getElementById(canvas);
-        //getContext("2d") 是内建的html 5对象 
-        this.ctx = c.getContext("2d");
-    },
+var Draw = function(canvas){
+    
+    var c = document.getElementById(canvas);
+    //getContext("2d") 是内建的html 5对象 
+    this.ctx = c.getContext("2d");
+    
     //画矩形 无填充
-    drawRect : function(x, y, length, size, color){
+    this.drawRect = function(x, y, length, size, color){
         this.ctx.fillStyle = color;
         this.ctx.strokeRect(x,y,length,size);
-    },
+    }
     
     //绘制填充的矩形
-    fillRect : function(x, y, length, size, color){
+    this.fillRect = function(x, y, length, size, color){
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x,y,length,size);
-    },
-    
+    }
     //清除指定像素
-    clearRect : function(x, y, length, size){
+    this.clearRect = function(x, y, length, size){
         this.ctx.clearRect(x, y, length, size);
-    },
+    }
     
     //画图像
-    drawImage : function(img, x, y, width, height){
+    this.drawImage = function(img, x, y, width, height){
         this.ctx.drawImage(img, x, y, width, height);
-    },
+    }
     
     //返回图像的数据
-    getImageData : function(x, y, length, size){
+    this.getImageData = function(x, y, length, size){
         return this.ctx.getImageData(x, y, length, size);
-    },
+    }
     
     //将图像的数据填充到某一个坐标
-    putImageData : function(img, x, y){
+    this.putImageData = function(img, x, y){
         this.ctx.putImageData(img, x, y);
-    },
+    }
         
     //动画效果 
-    drawdynamicImag : function(img, x, y, length, size, speed){
-        setTimeout(function(){
-            Draw.drawdynamicImag(img, x, y, length, size,speed);
-        },speed);
-    },
+    this.drawdynamicImag = function(img, x, y, length, size, speed){
+        // setTimeout(function(){
+            // Draw.drawdynamicImag(img, x, y, length, size,speed);
+        // },speed);
+    }
 }
 
 
@@ -200,3 +161,6 @@ var Helpers = {
         return Math.round(Math.random()*max+min);
     },
 }
+
+
+Game.init();
