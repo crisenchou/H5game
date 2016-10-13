@@ -94,7 +94,8 @@ var Player = function(tank){
     this.tank = tank;
     this.score = 0;
     this.move = function(){
-        var random = Helpers.random(1,4);
+        var random = Helpers.random(0,3);
+        random = random+1;
         this.tank.move(random);
     }
 }
@@ -132,7 +133,7 @@ var Game = {
     init : function(canvas){
         Draw.init(canvas);
         //Game.brush = draw;
-        Draw.drawRect(0,0,this.height,this.width,this.background);
+        Draw.fillRect(0,0,this.height,this.width,this.background);
         var image = new Image();
         image.src = "img/player1.png";
         player1 = new Player(
@@ -200,17 +201,127 @@ var Draw ={
 
 
 //辅助类
+/*
+* js的伪随机非常的不稳定
+*/
 var Helpers = {
-    //伪随机 总体期望值有偏移；量
-    random : function(min, max){
-        return Math.round(Math.random()*(max-min))+min;
+    // random : function(min, max){
+        // return Math.round(Math.random()*(max-min))+min;
+    // },
+    
+    
+    getbit: function(num){
+        var bit = 0;
+        while(num>0){
+            num = num>>1;
+            bit++;
+        }
+        return bit;
     },
+
+    randomBin : function(times){
+        var num = "";
+        while(times>0){
+            num = num + Math.round(Math.random());
+            times--;
+        }
+        
+        return parseInt(num,2);
+    },
+
+    random : function(min,max){
+        var num = max-min;
+        var times = this.getbit(num);
+        do{
+            var binNum = this.randomBin(times);
+        }while(!(binNum<=num));
+        return binNum+min;
+    }
+
 }
 
 
-// var i = 50;
-// while(i){
-    // console.log(Helpers.random(1,4));
-    // i--;
+// function r(min, max){
+    // var time = max-min;
+    // var num = 0;
+    // while(time){
+        // num = num + Math.round(Math.random());
+        // time--;
+    // }
+    // return num;
+    
 // }
 
+
+
+
+// function prob(){
+    
+    // var zero = 0;
+    // var one = 0;
+    // for(var i=0;i<100000;i++){
+        // if(Math.round(Math.random()) ==1){
+            // one++;
+        // }else{
+            // zero++;
+        // }
+    // }
+    // return zero+"  "+one;
+// }
+
+// for(var i=0;i<10;i++){
+    // var p = prob();
+    // console.log(p);
+// }
+
+
+
+// var i = 10000;
+// var zero = 0;
+// var one = 0;
+// var two = 0;
+// var three = 0
+// while(i){
+    // var num1 = Math.round(Math.random());
+    // var num2 = Math.round(Math.random());
+    // num1 = num1 + "";
+    // num2 = num2 + "";
+    // var num = num1+num2;
+    // if(num=="00"){
+        // zero++;
+    // }else if(num=="01"){
+        // one++;
+    // }else if(num=="10"){
+        // two++;
+    // }else if(num=="11"){
+        // three++;
+    // }else{
+        // console.log("assert false");
+    // }
+    // //console.log(num);
+    // // if(Math.round(Math.random()) ==1){
+        // // one++;
+    // // }else{
+        // // zero++;
+    // // }
+    // //console.log(r(1,4));
+    // i--;
+// }
+// console.log(zero,one,two,three);
+
+
+//生成多少位数的二进制数
+// function random(times){
+    // var num = "";
+    // while(times>0){
+        // num = num + Math.round(Math.random());
+        // times--;
+    // }
+    // return num;
+// }
+
+
+// for(i=0;i<100;i++){
+    // var n = random(4);
+    // console.log(n);
+// }
