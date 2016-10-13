@@ -16,15 +16,16 @@ var Position = function(x,y){
 }
 
 
-var Tank = function(type, hp, derec, postion, bullet){
+var Tank = function(type, hp, derec, position, imgSource){
     this.type = type || 1;//类型
     this.hp = hp || 20;//血量
     this.ammo = 1;//弹药数量
     this.isgod = 0;//是否无敌
     this.speed = 100;//移动速度
     this.derec =  derec || 1;//方向
-    this.postion = postion;//依赖倒置 属性注入
-    this.bullet = bullet;//依赖倒置 属性注入
+    this.position = position;//依赖倒置 属性注入
+    this.size = 50;//坦克尺寸
+    this.img = imgSource;
     this.show = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo>0){
@@ -34,11 +35,39 @@ var Tank = function(type, hp, derec, postion, bullet){
     this.destroyed = function(){
         //阵亡
     }
+
     
-    this.move = function(){
-        console.log("tank is moveing");
+    this.move = function(derec){
+        Draw.clearRect(this.position.x, this.position.y, this.size, this.size);
+        var derec = derec || this.derec;
+        switch(derec){
+            case 1 : //左
+                this.position.x > 0 && --this.position.x;
+                break;
+            case 2 : //上
+                this.position.y > 0 && --this.position.y;
+                break;
+            case 3 : //右
+                this.position.x < Game.width && ++this.position.x;
+                break;
+            case 4 : //下
+                this.position.y > Game.height &&  ++this.position.y;
+                break;
+            default : 
+                break;
+        }
+        Draw.drawImage(this.img, this.position.x, this.position.y, this.size, this.size)
+        //console.log("tank is moveing");
+    }
+    
+    //画坦克
+    this.draw = function(){
+        Draw.drawImage(this.img, this.position.x, this.position.y, this.size, this.size)
     }
 }
+
+
+
 
 
 //子弹
@@ -60,13 +89,13 @@ var Barrier = function(type,isAccess){
     this.isAccess = isAccess;
 }
 
-
 //玩家1
 var Player = function(tank){
     this.tank = tank;
     this.score = 0;
     this.move = function(){
-        this.tank.move();
+        var random = Helpers.random(1,4);
+        this.tank.move(random);
     }
 }
 
@@ -96,71 +125,92 @@ var Map = {
 //游戏选项
 var Game = {
     status : 1,
-    init : function(){
-        player1 = new Player(new Tank(1,10,2,new Position(100,200),123));
-        player1.move();
+    brush : null,
+    height : 500,
+    width : 500,
+    background : "black",
+    init : function(canvas){
+        Draw.init(canvas);
+        //Game.brush = draw;
+        Draw.drawRect(0,0,this.height,this.width,this.background);
+        var image = new Image();
+        image.src = "img/player1.png";
+        player1 = new Player(
+            new Tank(1,10,2,new Position(200,450),image)
+        );
+        
+        player1.tank.draw();
+        setInterval("player1.move()",10);
         //console.log();
     },
+    
     start : function(){
-        AI.run();
+        //AI.run();
     },
 }
 
 
 //画布
-var Draw = function(canvas){
-    
-    var c = document.getElementById(canvas);
-    //getContext("2d") 是内建的html 5对象 
-    this.ctx = c.getContext("2d");
+var Draw ={
+    ctx : null,
+    init : function(canvas){
+        var c = document.getElementById(canvas);
+        //getContext("2d") 是内建的html5 对象 
+        this.ctx = c.getContext("2d");
+    },
     
     //画矩形 无填充
-    this.drawRect = function(x, y, length, size, color){
+    drawRect : function(x, y, length, width, color){
         this.ctx.fillStyle = color;
-        this.ctx.strokeRect(x,y,length,size);
-    }
+        this.ctx.strokeRect(x,y,length,width);
+    },
     
     //绘制填充的矩形
-    this.fillRect = function(x, y, length, size, color){
+    fillRect :  function(x, y, height, width, color){
         this.ctx.fillStyle = color;
-        this.ctx.fillRect(x,y,length,size);
-    }
+        this.ctx.fillRect(x,y,height,width);
+    },
     //清除指定像素
-    this.clearRect = function(x, y, length, size){
-        this.ctx.clearRect(x, y, length, size);
-    }
+    clearRect :  function(x, y, height, width){
+        this.ctx.clearRect(x, y, height, width);
+    },
     
     //画图像
-    this.drawImage = function(img, x, y, width, height){
-        this.ctx.drawImage(img, x, y, width, height);
-    }
+    drawImage :  function(img, x, y, height, width){
+        this.ctx.drawImage(img, x, y, height, width);
+    },
     
     //返回图像的数据
-    this.getImageData = function(x, y, length, size){
-        return this.ctx.getImageData(x, y, length, size);
-    }
+    getImageData :  function(x, y, height, width){
+        return this.ctx.getImageData(x, y, height, width);
+    },
     
     //将图像的数据填充到某一个坐标
-    this.putImageData = function(img, x, y){
+    putImageData :  function(img, x, y){
         this.ctx.putImageData(img, x, y);
-    }
+    },
         
     //动画效果 
-    this.drawdynamicImag = function(img, x, y, length, size, speed){
+    drawdynamicImag :  function(img, x, y, height, width, speed){
         // setTimeout(function(){
             // Draw.drawdynamicImag(img, x, y, length, size,speed);
         // },speed);
-    }
-}
-
-
-
-//辅助类
-var Helpers = {
-    random : function(min, max){
-        return Math.round(Math.random()*max+min);
     },
 }
 
 
-Game.init();
+//辅助类
+var Helpers = {
+    //伪随机 总体期望值有偏移；量
+    random : function(min, max){
+        return Math.round(Math.random()*(max-min))+min;
+    },
+}
+
+
+// var i = 50;
+// while(i){
+    // console.log(Helpers.random(1,4));
+    // i--;
+// }
+

@@ -1,5 +1,31 @@
+<!DOCTYPE html>
 <html>
+<head>
+<title>坦克</title>
+<meta charset="utf-8" />
+<style>
+
+body{
+    width: 800px;
+    margin: 0 auto;
+    position:absolute;
+    
+}
+
+#myCanvas{
+    margin:20px;
+}
+
+</style>
+</head>
 <body>
-<script src="game.js"></script>
+<h1>坦克</h1>
+<canvas id="myCanvas" width="500px" height="500px" ></canvas>
 </body>
-</html>
+<script type="text/javascript" src="game.js"></script>
+<script type="text/javascript">
+
+Game.init("myCanvas");
+Game.start();
+</script>
+</html> 
