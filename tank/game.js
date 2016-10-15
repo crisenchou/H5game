@@ -141,7 +141,7 @@ var Game = {
         );
         
         player1.tank.draw();
-        setInterval("player1.move()",10);
+        //setInterval("player1.move()",10);
         //console.log();
     },
     
