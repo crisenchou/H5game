@@ -42,16 +42,16 @@ var Tank = function(type, hp, derec, position, imgSource){
         var derec = derec || this.derec;
         switch(derec){
             case 1 : //左
-                this.position.x > 0 && --this.position.x;
+                this.position.x > 0 && (this.position.x -= 5);
                 break;
             case 2 : //上
-                this.position.y > 0 && --this.position.y;
+                this.position.y > 0 && (this.position.y -= 5);
                 break;
             case 3 : //右
-                this.position.x < Game.width && ++this.position.x;
+                this.position.x < (Game.width-this.size) &&  (this.position.x += 5);
                 break;
             case 4 : //下
-                this.position.y < Game.height &&  ++this.position.y;
+                this.position.y < (Game.height-this.size) && (this.position.y += 5);
                 break;
             default : 
                 break;
@@ -89,14 +89,45 @@ var Barrier = function(type,isAccess){
     this.isAccess = isAccess;
 }
 
+
+var Badge = {
+    x  : 250,
+    y  : 450,
+    size : 50,
+    imageSrc : "img/player2.png",
+    init : function(){
+        var image = new Image();
+        image.src = this.imageSrc;
+        Draw.drawImage(image, this.x, this.y, this.size, this.size);
+    }
+}
+
+
 //玩家1
 var Player = function(tank){
     this.tank = tank;
     this.score = 0;
-    this.move = function(){
-        var random = Helpers.random(0,3);
-        random = random+1;
-        this.tank.move(random);
+    this.move = function(derec){
+        switch(derec){
+            case 37 : 
+                this.tank.move(1);
+                break;
+            case 38 : 
+                this.tank.move(2);
+                break;
+            case 39 : 
+                this.tank.move(3);
+                break;
+            case 40 : 
+                this.tank.move(4);
+                break;
+            case 32 :  
+                this.tank.shoot(4);
+                break;
+            default : 
+                console.log("无效按键");
+                break;
+        }
     }
 }
 
@@ -104,7 +135,10 @@ var Player = function(tank){
 var AI = function(tank){
     this.tank = tank;
     var move = function(){
-        this.tank.move();
+        var random = Helpers.random(0,3);
+        random = random+1;
+        this.tank.move(random);
+        //this.tank.move();
         //随机漫步算法
     }
 }
@@ -133,14 +167,21 @@ var Game = {
     init : function(canvas){
         Draw.init(canvas);
         //Game.brush = draw;
-        Draw.fillRect(0,0,this.height,this.width,this.background);
+        Draw.fillRect(0,0,this.height,this.width,this.background);//初始化游戏边界
+        
+        Badge.init();//初始化老家
+        //Map.init();//初始化地图
+        
+        //初始化玩家
         var image = new Image();
         image.src = "img/player1.png";
         player1 = new Player(
-            new Tank(1,10,2,new Position(200,250),image)
+            new Tank(1,10,2,new Position(200,450),image)
         );
-        
         player1.tank.draw();
+        
+        
+        //初始化AI
         //setInterval("player1.move()",10);
         //console.log();
     },
@@ -148,6 +189,11 @@ var Game = {
     start : function(){
         //AI.run();
     },
+    
+    
+    controle : function(derec){
+        player1.move(derec);
+    }
 }
 
 
