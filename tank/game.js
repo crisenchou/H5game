@@ -11,8 +11,8 @@
 
 //坐标
 var Position = function(x,y){
-    this.x = x || 0;
-    this.y = y || 0;
+    this.x = x || 0; //横坐标
+    this.y = y || 0; //纵坐标
 }
 
 
@@ -21,48 +21,56 @@ var Tank = function(type, hp, derec, position, imgSource){
     this.hp = hp || 20;//血量
     this.ammo = 1;//弹药数量
     this.isgod = 0;//是否无敌
-    this.speed = 100;//移动速度
-    this.derec =  derec || 1;//方向
+    this.speed = 5;//移动速度
+    this.derec =  derec || 3;//方向
     this.position = position;//依赖倒置 属性注入
     this.size = 50;//坦克尺寸
     this.img = imgSource;
-    this.show = function(){
+    this.shoot = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo>0){
+            //初始化子弹 以及子弹运动方向 子弹移动 
+            //var bullet = new Bullet();
+            //bullet.move();
         }
 	}
 
     this.destroyed = function(){
         //阵亡
     }
-
     
     this.move = function(derec){
-        Draw.clearRect(this.position.x, this.position.y, this.size, this.size);
-        var derec = derec || this.derec;
+        this.clear();
         switch(derec){
-            case 1 : //左
-                this.position.x > 0 && (this.position.x -= 5);
+            case 0 : //左
+                this.position.x > 0 && (this.position.x -= this.speed);
                 break;
-            case 2 : //上
-                this.position.y > 0 && (this.position.y -= 5);
+            case 1 : //上
+                this.position.y > 0 && (this.position.y -= this.speed);
                 break;
-            case 3 : //右
-                this.position.x < (Game.width-this.size) &&  (this.position.x += 5);
+            case 2 : //右
+                this.position.x < (Game.width-this.size) &&  (this.position.x += this.speed);
                 break;
-            case 4 : //下
-                this.position.y < (Game.height-this.size) && (this.position.y += 5);
+            case 3 : //下
+                this.position.y < (Game.height-this.size) && (this.position.y += this.speed);
                 break;
             default : 
                 break;
         }
-        Draw.drawImage(this.img, this.position.x, this.position.y, this.size, this.size)
+        this.draw();
+        //Draw.drawImage(this.img, this.position.x, this.position.y, this.size, this.size)
         //console.log("tank is moveing");
     }
     
     //画坦克
     this.draw = function(){
-        Draw.drawImage(this.img, this.position.x, this.position.y, this.size, this.size)
+        Draw.drawImage(this.img, this.position.x, this.position.y, this.size-2, this.size-2)
+    }
+    
+    //清除坦克
+    this.clear = function(){
+        Draw.clearRect(this.position.x, this.position.y, this.size, this.size);
+        Draw.fillRect(this.position.x, this.position.y, this.size, this.size, Game.background);
     }
 }
 
@@ -78,6 +86,7 @@ var Bullet = function(speed,position,damage){
     this.position = position;
     this.damage = damage || 10;
     this.move = function(derec){
+        
         //do smone thing
     }
 }
@@ -108,38 +117,64 @@ var Player = function(tank){
     this.tank = tank;
     this.score = 0;
     this.move = function(derec){
-        switch(derec){
-            case 37 : 
-                this.tank.move(1);
-                break;
-            case 38 : 
-                this.tank.move(2);
-                break;
-            case 39 : 
-                this.tank.move(3);
-                break;
-            case 40 : 
-                this.tank.move(4);
-                break;
-            case 32 :  
-                this.tank.shoot(4);
-                break;
-            default : 
-                console.log("无效按键");
-                break;
+        console.log(derec);
+        this.tank.move(derec);
+    };
+    
+    this.controle = function(keycode){
+        if(keycode<=40 && keycode>=37){
+            
+            this.move(keycode-37);
+        }else if(keycode == 32){
+            this.shoot();
+        }else{
+            console.log("assert false");
         }
+    };
+    
+    this.shoot = function(){
+        this.tank.shoot();
     }
+    
 }
 
 //电脑AI
-var AI = function(tank){
-    this.tank = tank;
-    var move = function(){
-        var random = Helpers.random(0,3);
-        random = random+1;
-        this.tank.move(random);
-        //this.tank.move();
-        //随机漫步算法
+var AI = {
+    tankArr : [],
+    nowAmount : 0,
+    totalAmount : 20,
+    defaultPosition : [0,200,450],
+    move : function(){
+        if(this.tankArr.length > 0){
+            var AIProcess = setInterval(function(){
+                for(var i in AI.tankArr){
+                    var random = Helpers.random(0,3);
+                    //增加只能  目的地坐标为 450,200
+                    
+                    
+                    
+                    AI.tankArr[i].move(random);
+                }
+            },1000);
+        }
+        
+    },
+    init : function(){
+        //初始化玩家
+        while(this.nowAmount < 4){
+            this.create();
+        }
+    },
+    create : function(){
+        var image = new Image();
+        image.src = "img/player1.png";
+        var random = Helpers.random(0,2);
+        var px = this.defaultPosition[random];
+        var tank = new Tank(1,10,2,new Position(px,0),image);
+        tank.draw();
+        this.tankArr.push(tank);
+        this.nowAmount++;
+        this.totalAmount--;
     }
 }
 
@@ -157,6 +192,8 @@ var Map = {
     },
 }
 
+
+
 //游戏选项
 var Game = {
     status : 1,
@@ -172,6 +209,9 @@ var Game = {
         Badge.init();//初始化老家
         //Map.init();//初始化地图
         
+        
+        
+        
         //初始化玩家
         var image = new Image();
         image.src = "img/player1.png";
@@ -182,17 +222,16 @@ var Game = {
         
         
         //初始化AI
-        //setInterval("player1.move()",10);
-        //console.log();
+        AI.init();
+        AI.move();
     },
     
     start : function(){
         //AI.run();
     },
     
-    
-    controle : function(derec){
-        player1.move(derec);
+    controle : function(keycode){
+        player1.controle(keycode);
     }
 }
 
