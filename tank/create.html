@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>坦克</title>
+<meta charset="utf-8" />
+<style>
+
+body{
+    width: 800px;
+    margin: 0 auto;
+    position:absolute;
+    
+}
+
+#myCanvas{
+    margin:20px;
+}
+
+.sample img{
+    height:50px;
+    width:50px;
+}
+
+</style>
+</head>
+<body id="document">
+<h1>地图创建页面</h1>
+<p>障碍物定义1:草丛 2:砖墙 3:铁块 4:河流  5:钉子陷阱</p>
+<div class="sample">
+<img src="img/1-barrier.jpg"></img>
+<img src="img/2-barrier.jpg"></img>
+<img src="img/3-barrier.jpg"></img>
+<img src="img/4-barrier.jpg"></img>
+<img src="img/5-barrier.jpg"></img>
+</div>
+<canvas id="myCanvas" width="550px" height="550px" ></canvas>
+</body>
+<script type="text/javascript" src="game.js"></script>
+<script type="text/javascript">
+Game.init("myCanvas");
+</script>
+</html> 

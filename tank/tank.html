@@ -16,18 +16,18 @@ body{
     margin:20px;
 }
 
+
 </style>
 </head>
 <body id="document">
 <h1>坦克</h1>
-<canvas id="myCanvas" width="500px" height="500px" ></canvas>
+<canvas id="myCanvas" width="550px" height="550px" ></canvas>
 </body>
 <script type="text/javascript" src="game.js"></script>
 <script type="text/javascript">
 
 Game.init("myCanvas");
 Game.start();
-
 
 window.onload=function(){ 
     document.getElementById('document').keyup = keyup;
@@ -37,19 +37,21 @@ window.onload=function(){
 
 function keyup(event)
 {
+    console.log(event.keyCode)
+    Game.controle(event.keyCode);
     //37 左箭头   39右箭头  38上箭头  40 下箭头  32空格
-    if(event.keyCode >= 37 && event.keyCode<=40 || event.keyCode==32){
-        game.control(event.keyCode);
-    }
+    //if(event.keyCode >= 37 && event.keyCode<=40 || event.keyCode==13){
+        //Game.controle(event.keyCode);
+    //}
 }
 
 
 function keyPress(event)
 {
-    if(event.keyCode >= 37 && event.keyCode<=40){
+    console.log(event.keyCode)
+    //if(event.keyCode >= 37 && event.keyCode<=40){
         Game.controle(event.keyCode)
-        //setTimeout(Game.controle(event.keyCode),100)
-    }
+    //}
 }
 
 </script>
