@@ -3,11 +3,31 @@
 * tank 坦克
 * bullet  子弹
 * barrier  障碍
-* player 玩家
-* game 游戏 地图与设置
-* draw 图形类接口
+* Player 玩家
+* Game 游戏 地图与设置
+* Draw 图形类接口
 * AI 电脑AI
+* HeartBeat 心跳
 */
+
+
+
+var HeartBeat = {
+    bulletQueue : [],
+    start : function(){
+        setInterval(this.heartbeat,1000);
+    },
+    heartbeat : function(){
+        AI.move();
+        if(HeartBeat.bulletQueue.length > 0){
+            for(var i in HeartBeat.bulletQueue){
+                HeartBeat.bulletQueue[i].move();
+            }
+        }
+    }
+}
+
+
 
 //坐标
 var Position = function(x,y){
@@ -16,6 +36,7 @@ var Position = function(x,y){
 }
 
 
+//图像
 var Img = function(src){
     this.src = src;
     var img  = new Image();
@@ -24,8 +45,10 @@ var Img = function(src){
 }
 
 
-
+//坦克
 var Tank = function(type, hp, derec, position, imgSource){
+    // this.x = x;
+    // this.y = y;
     this.type = type || 1;//类型
     this.hp = hp || 20;//血量
     this.ammo = 1;//弹药数量
@@ -39,7 +62,10 @@ var Tank = function(type, hp, derec, position, imgSource){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo>0){
             //初始化子弹 以及子弹运动方向 子弹移动 
-            var bullet = new Bullet(100 ,this.position,10);
+            console.log("tank derec is "+this.derec);
+            var bullet = new Bullet(this.position,this.derec, 10);
+            //setInterval(function(){bullet.move()},100);
+            //this.ammo--;
             //bullet.move();
             //this.ammo--;
         }
@@ -89,16 +115,20 @@ var Tank = function(type, hp, derec, position, imgSource){
 
 
 //子弹
-var Bullet = function(speed,position,derec,damage){
+var Bullet = function(speed, position, derec, damage){
     //this.derec = derec || 1;
-    this.speed = speed || 100;
+    this.speed = speed || 50;
     this.position = position;
     this.damage = damage || 10;
     this.derec = derec;
     this.size = 5;
-    this.move = function(derec){
+    this.move = function(){
+        
+        console.log("bullet derec is "+this.derec);
+        
+        this.draw();
         this.clear();
-        switch(derec){
+        switch(this.derec){
             case 0 : //左
                 this.position.x > 0 && (this.position.x -= this.speed);
                 break;
@@ -115,13 +145,14 @@ var Bullet = function(speed,position,derec,damage){
                 break;
         }
         
-        
-        this.draw(derec);
+        this.draw();
     };
     
     //画子弹
-    this.draw = function(derec){
-        Draw.drawRect(this.position.x, this.position.y, this.size, this.size, "white")
+    this.draw = function(){
+        
+        console.log("draw bullet");
+        Draw.fillRect(this.position.x, this.position.y, this.size, this.size, "white")
     }
     
     //清除子弹
@@ -185,16 +216,25 @@ var AI = {
     totalAmount : 20,
     defaultPosition : [0,250,500],
     move : function(){
+        
         if(AI.tankArr.length > 0){
-            var AIProcess = setInterval(function(){
-                for(var i in AI.tankArr){
-                    var random = Helpers.random(0,3);
-                    //增加智能  目的地坐标为 500,250
-                    var derec = AI.fixDerec(AI.tankArr[i], random)
-                    AI.tankArr[i].move(derec);
-                }
-            },1000);
+            for(var i in AI.tankArr){
+                var random = Helpers.random(0,3);
+                var derec = AI.fixDerec(AI.tankArr[i], random)
+                AI.tankArr[i].move(derec);
+            }
         }
+        
+        // if(AI.tankArr.length > 0){
+            // var AIProcess = setInterval(function(){
+                // for(var i in AI.tankArr){
+                    // var random = Helpers.random(0,3);
+                    // //增加智能  目的地坐标为 500,250
+                    // var derec = AI.fixDerec(AI.tankArr[i], random)
+                    // AI.tankArr[i].move(derec);
+                // }
+            // },1000);
+        // }
     },
     
     
@@ -275,7 +315,7 @@ var Game = {
         //Game.brush = draw;
         Draw.fillRect(0,0,this.height,this.width,this.background);//初始化游戏边界
         Badge.init();//初始化老家
-
+        HeartBeat.start();//启动心跳
     },
     
     //游戏开始
@@ -297,11 +337,9 @@ var Game = {
             new Tank(type,hp,derec,position,playerImgSource)
         );
         player1.tank.draw(derec);
-        
-        
         //初始化AI
         AI.init();
-        AI.move();
+        //AI.move();
     },
     
     controle : function(keycode){
