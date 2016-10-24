@@ -7,23 +7,80 @@
 * Game 游戏 地图与设置
 * Draw 图形类接口
 * AI 电脑AI
-* HeartBeat 心跳
 */
 
 
+//引擎
+/*var Engine = {
+    //图片渲染
+    render : function(img, x, y, size){
+        
+    }
+    
+    //动画效果
+    cartoon : function(img, start, end){
+        
+    }
+    
+    //碰撞检测
+    checkCrash : function(x, y){
+        //return int
+    }
+    
+    //资源管理
+    resManager : function(){
+        
+    }
+    
+    //地图模型
+    gameObject : function(){
+        
+    }
+}*/
 
-var HeartBeat = {
+var Engine = {
     bulletQueue : [],
+    heartId : 0,
     start : function(){
-        setInterval(this.heartbeat,1000);
+        this.heartId = setInterval(this.heartbeat,1000);
     },
+    
     heartbeat : function(){
         AI.move();
-        if(HeartBeat.bulletQueue.length > 0){
-            for(var i in HeartBeat.bulletQueue){
-                HeartBeat.bulletQueue[i].move();
+        if(Engine.bulletQueue.length > 0){
+            for(var i in Engine.bulletQueue){
+                Engine.bulletQueue[i].move();
             }
         }
+    },
+    
+    //动画效果
+    move : function(object, derec, frequency){
+        //移动规则
+        if(0<=derec && 3>=derec){
+            Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
+            var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
+            if(!checkCrash(object.x+rule[derec].x, object.y+rule[derec].y)){
+                object.x += rule[derec].x;
+                object.y += rule[derec].y;
+            }
+            Draw.drawImage(object.img, object.x, object.y, object.size, object.size)
+        }
+    },
+    
+    
+    
+    
+    
+    checkCrash : function(x, y){
+        var offset = Game.position2Offset(x, y);
+        var access = Game.mapData[offset.i][offset.j];
+        if(access == 1){
+            return true;
+        }else{
+            return false;
+        }
+        
     }
 }
 
@@ -53,7 +110,7 @@ var Tank = function(type, hp, derec, position, imgSource){
     this.hp = hp || 20;//血量
     this.ammo = 1;//弹药数量
     this.isgod = 0;//是否无敌
-    this.speed = 20;//移动速度
+    this.speed = 1;//移动速度
     this.derec =  derec || 3;//方向
     this.position = position;//依赖倒置 属性注入
     this.size = 50;//坦克尺寸
@@ -73,6 +130,7 @@ var Tank = function(type, hp, derec, position, imgSource){
 
     this.destroyed = function(){
         //阵亡
+        this.hp = 0;
     }
     
     this.move = function(derec){
@@ -123,10 +181,7 @@ var Bullet = function(speed, position, derec, damage){
     this.derec = derec;
     this.size = 5;
     this.move = function(){
-        
         console.log("bullet derec is "+this.derec);
-        
-        this.draw();
         this.clear();
         switch(this.derec){
             case 0 : //左
@@ -144,7 +199,6 @@ var Bullet = function(speed, position, derec, damage){
             default : 
                 break;
         }
-        
         this.draw();
     };
     
@@ -198,7 +252,8 @@ var Player = function(tank){
             
             this.move(keycode-37);
         }else if(keycode == 0){
-            this.shoot();
+            this.tank.destroyed();
+            //this.shoot();
         }else{
             console.log("assert false");
         }
@@ -215,13 +270,38 @@ var AI = {
     nowAmount : 0,
     totalAmount : 20,
     defaultPosition : [0,250,500],
-    move : function(){
+    init : function(){
+        //初始化AI
+        while(this.nowAmount < 4){
+            this.create();
+        }
+    },
+    
+    create : function(){
+        var random = Helpers.random(0,2);
+        var px = this.defaultPosition[random];
         
+        var AiImgSource = new Array(4);
+        for(var i=0;i<=3;i++){
+            AiImgSource[i] = new Img("img/"+i+"-player1.png");
+        }
+
+        var tank = new Tank(1,10,2,new Position(px,0),AiImgSource);
+        tank.draw(3);
+        this.tankArr.push(tank);
+        this.nowAmount++;
+        this.totalAmount--;
+    },
+    
+    move : function(){
+
         if(AI.tankArr.length > 0){
             for(var i in AI.tankArr){
-                var random = Helpers.random(0,3);
-                var derec = AI.fixDerec(AI.tankArr[i], random)
-                AI.tankArr[i].move(derec);
+                if(AI.tankArr[i].hp > 0){
+                    var random = Helpers.random(0,3);
+                    var derec = AI.fixDerec(AI.tankArr[i], random)
+                    AI.tankArr[i].move(derec);
+                }
             }
         }
         
@@ -261,44 +341,7 @@ var AI = {
             return derec;
         }
     },
-    
-    init : function(){
-        //初始化AI
-        while(this.nowAmount < 4){
-            this.create();
-        }
-    },
-    create : function(){
-        var random = Helpers.random(0,2);
-        var px = this.defaultPosition[random];
-        
-        var AiImgSource = new Array(4);
-        for(var i=0;i<=3;i++){
-            AiImgSource[i] = new Img("img/"+i+"-player1.png");
-        }
-
-        var tank = new Tank(1,10,2,new Position(px,0),AiImgSource);
-        tank.draw(3);
-        this.tankArr.push(tank);
-        this.nowAmount++;
-        this.totalAmount--;
-    }
 }
-
-
-//地图
-var Map = {
-    position : null,
-    elementId : "myCanvas",
-	length : 550,
-	height : 550,
-	background : "white",
-	status : 0,
-    init : function(){
-        //初始化地图
-    },
-}
-
 
 
 //游戏选项
@@ -309,13 +352,42 @@ var Game = {
     width : 550,
     background : "black",
     size : 25,
+    mapData : null,//地图数据
+    barriers : [],
     //游戏初始化
     init : function(canvas){
         Draw.init(canvas);
         //Game.brush = draw;
         Draw.fillRect(0,0,this.height,this.width,this.background);//初始化游戏边界
-        Badge.init();//初始化老家
-        HeartBeat.start();//启动心跳
+        Badge.init();//初始化大本营
+        
+        Game.barriers = new Array(5);
+        //初始化障碍资源
+        for(var i=0;i<=4;i++){
+            Game.barriers[i] = new Img("img/"+(i+1)+"-barrier.jpg");
+        }
+        
+        
+        
+        var horizon = Game.width/Game.size;
+        var vertical = Game.height/Game.size
+        Game.mapData = new Array(horizon);
+        for(var i=0;i<horizon;i++){
+            Game.mapData[i] = new Array(vertical);
+            for(var j=0;j<vertical;j++){
+                var barrier = Helpers.random(0,4);
+                Game.mapData[i][j] = barrier;
+                var position = Game.ossfet2Position(i,j);
+                var imgsource = Game.barriers[barrier]
+                
+                console.log(imgsource);
+                Draw.drawImage(imgsource, position.x, position.y, Game.size, Game.size);
+            }
+        }
+        
+        
+        
+        Engine.start();//启动引擎
     },
     
     //游戏开始
@@ -344,6 +416,15 @@ var Game = {
     
     controle : function(keycode){
         player1.controle(keycode);
+    },
+    
+    //地图坐标与地图数组之间的相互转换
+    position2Offset : function(x, y){
+        return {"i":x/25,"i":y/25};
+    },
+    
+    ossfet2Position : function(i, j){
+        return {"x":25*i,"y":25*j};
     }
 }
 
@@ -353,7 +434,6 @@ var Draw ={
     ctx : null,
     init : function(canvas){
         var c = document.getElementById(canvas);
-        //getContext("2d") 是内建的html5 对象 
         this.ctx = c.getContext("2d");
     },
     
@@ -395,6 +475,8 @@ var Draw ={
         // },speed);
     },
 }
+
+
 
 
 //辅助类
