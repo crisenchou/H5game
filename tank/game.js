@@ -10,43 +10,55 @@
 */
 
 var Engine = {
-    pid : 0;
+    pid : 0,
+    tankQueue : [],
     //process : [],//分配进程
     start : function(){
         this.loadMap();//加载地图
         this.renderMap();//渲染地图
-        this.pid = setInterval(Engine.work(),100);//启动计时
+        //this.pid = setInterval(Engine.work(),1000);//启动计时
+        this.pid = setInterval(function(){
+            Engine.work()
+        },50);//启动计时
     },
     
     work : function(){
-        //
+        if(Engine.tankQueue.length > 0){
+            for(var i in Engine.tankQueue){
+                if(Engine.tankQueue[i].moving == true){
+                    Engine.cartoon(Engine.tankQueue[i]);
+                }
+            }
+        }
     },
     
-    // getProcessId : function(){
-        
-    // }
-    
     //动画效果
-    cartoon : function(object, derec, frequency){
+    cartoon : function(object){
+        var derec = object.derec;
         //移动规则
         if(0<=derec && 3>=derec){
             Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
             var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
-            if(!checkCrash(object.x+rule[derec].x, object.y+rule[derec].y)){
+            if(!Engine.checkCrash(object.x+rule[derec].x, object.y+rule[derec].y)){
                 object.x += rule[derec].x;
                 object.y += rule[derec].y;
             }
-            
-            this.render(object.resourceId, object.x, object.y, object.size)
+            //console.log(object.x, destx);
+            if(object.x==object.destx && object.y==object.desty){
+                object.moving = false;
+            }
+            Engine.render(object);
         }
     },
     
     
     //图片渲染
-    render : function(imgResourceId, x, y, size){
-        var img = this.resource.imgResource[imgResourceId];
-        Draw.drawImage(img, x, y, size, size)
-    }
+    render : function(object){
+        //var img = this.resource.imgResource[object.imgResourceId];
+        var img = object.img[1];
+        //console.log(img);
+        Draw.drawImage(img, object.x, object.y, object.size, object.size)
+    },
     
     
     //加载地图资源
@@ -59,7 +71,7 @@ var Engine = {
                 Map.resource[i][j] = barrier;
             }
         }
-    }
+    },
     
     //渲染地图
     renderMap : function(map){
@@ -69,16 +81,17 @@ var Engine = {
                 Engine.render(map[i][j], position.x, position.y, Game.size);//渲染单位像素
             }
         }
-    }
+    },
     
     checkCrash : function(x, y){
-        var offset = Game2Offset(x, y);
-        var access = Game.mapData[offset.i][offset.j];
-        if(access == 1){
-            return true;
-        }else{
-            return false;
-        }
+        return false;
+        //var offset = Game.position2Offset(x, y);
+        //var access = Game.mapData[offset.i][offset.j];
+        //if(access == 1){
+            //return true;
+        //}else{
+            //return false;
+        //}
         
     }
 }
@@ -120,6 +133,8 @@ var Tank = function(type, hp, derec, x, y, imgSource){
     this.derec =  derec || 3;//方向
     this.x = x;
     this.y = y;
+    this.destx = x;
+    this.destx = y;
     this.size = 50;//坦克尺寸
     this.img = imgSource;
     this.moving = false;
@@ -151,10 +166,11 @@ var Tank = function(type, hp, derec, x, y, imgSource){
 
 
 //子弹
-var Bullet = function(speed, position, derec, damage){
+var Bullet = function(speed, x, y, derec, damage){
     //this.derec = derec || 1;
     this.speed = speed || 50;
-    this = position;
+    this.x = x;
+    this.y = y;
     this.damage = damage || 10;
     this.derec = derec;
     this.size = 5;
@@ -219,8 +235,10 @@ var AI = {
             AiImgSource[i] = new Img("img/"+i+"-player1.png");
         }
 
-        var tank = new Tank(1,10,2,new Position(px,0),AiImgSource);
-        tank.draw(3);
+        var tank = new Tank(1, 10, 2, px, 0, AiImgSource);
+        
+        //tank.draw(3);
+        
         this.tankArr.push(tank);
         this.nowAmount++;
         this.totalAmount--;
@@ -290,8 +308,6 @@ var Game = {
     //游戏初始化
     init : function(canvas){
         
-        Engine.start();
-        
         Draw.init(canvas);
         //Game.brush = draw;
         Draw.fillRect(0,0,this.height,this.width,this.background);//初始化游戏边界
@@ -313,8 +329,7 @@ var Game = {
                 Game.mapData[i][j] = barrier;
                 var position = Game.ossfet2Position(i,j);
                 var imgsource = Game.barriers[barrier]
-                
-                console.log(imgsource);
+                //console.log(imgsource);
                 Draw.drawImage(imgsource, position.x, position.y, Game.size, Game.size);
             }
         }
@@ -338,11 +353,15 @@ var Game = {
         var type =1;
         var hp = 10;
         var derec = 1;
-        var position =  new Position(150,Game.height-2*Game.size);
         player1 = new Player(
-            new Tank(type,hp,derec,position,playerImgSource)
+            new Tank(type,hp,derec,150, (Game.height-2*Game.size) ,playerImgSource)
         );
-        player1.tank.draw(derec);
+        
+        Engine.render(player1.tank);
+        player1.tank.moving = true;
+        
+        Engine.tankQueue.push(player1.tank);
+        
         //初始化AI
         AI.init();
         //AI.move();
