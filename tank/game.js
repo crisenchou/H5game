@@ -16,10 +16,9 @@ var Engine = {
     start : function(){
         this.loadMap();//加载地图
         this.renderMap();//渲染地图
-        //this.pid = setInterval(Engine.work(),1000);//启动计时
         this.pid = setInterval(function(){
             Engine.work()
-        },50);//启动计时
+        },100);
     },
     
     work : function(){
@@ -35,28 +34,27 @@ var Engine = {
     //动画效果
     cartoon : function(object){
         var derec = object.derec;
-        //移动规则
         if(0<=derec && 3>=derec){
             Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
             var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
             if(!Engine.checkCrash(object.x+rule[derec].x, object.y+rule[derec].y)){
                 object.x += rule[derec].x;
                 object.y += rule[derec].y;
+                object.distance--;
             }
-            //console.log(object.x, destx);
-            if(object.x==object.destx && object.y==object.desty){
+
+            if(object.distance<=0){
                 object.moving = false;
             }
             Engine.render(object);
         }
     },
     
-    
+
     //图片渲染
     render : function(object){
         //var img = this.resource.imgResource[object.imgResourceId];
-        var img = object.img[1];
-        //console.log(img);
+        var img = object.img[object.derec];
         Draw.drawImage(img, object.x, object.y, object.size, object.size)
     },
     
@@ -84,14 +82,15 @@ var Engine = {
     },
     
     checkCrash : function(x, y){
-        return false;
-        //var offset = Game.position2Offset(x, y);
-        //var access = Game.mapData[offset.i][offset.j];
-        //if(access == 1){
-            //return true;
-        //}else{
-            //return false;
-        //}
+        
+        var offset = Game.position2Offset(x, y);
+        console.log(offset);
+        var access = Game.mapData[offset.i][offset.j];
+        if(access == 1){
+            return true;
+        }else{
+            return false;
+        }
         
     }
 }
@@ -133,21 +132,15 @@ var Tank = function(type, hp, derec, x, y, imgSource){
     this.derec =  derec || 3;//方向
     this.x = x;
     this.y = y;
-    this.destx = x;
-    this.destx = y;
     this.size = 50;//坦克尺寸
     this.img = imgSource;
     this.moving = false;
+    this.distance = 0;
     this.shoot = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo > 0){
             //初始化子弹 以及子弹运动方向 子弹移动 
-            console.log("tank derec is "+this.derec);
             var bullet = new Bullet(this,this.derec, 10);
-            //setInterval(function(){bullet.move()},100);
-            //this.ammo--;
-            //bullet.move();
-            //this.ammo--;
         }
 	}
 
@@ -156,11 +149,17 @@ var Tank = function(type, hp, derec, x, y, imgSource){
         this.hp = 0;
     }
     
-    this.move = function(derec){
+    this.move = function(derec, distance){
         //指定方向 指定移动距离  剩下的全部交给引擎来实现
-        this.derec = derec;
-        this.distance = 1;
-        Engine.cartoon(this);
+        if(!this.moving && this.derec == derec){
+            this.derec = derec;
+            this.moving = true;
+            this.distance = distance || 5;
+            Engine.cartoon(this);
+        }else{
+            this.derec = derec;
+            Engine.cartoon(this);
+        }
     }
 }
 
@@ -193,8 +192,7 @@ var Player = function(tank){
     this.tank = tank;
     this.score = 0;
     this.move = function(derec){
-        //console.log(derec);
-        this.tank.move(derec);
+        this.tank.move(derec, 25);
     };
     
     this.controle = function(keycode){
@@ -236,36 +234,14 @@ var AI = {
         }
 
         var tank = new Tank(1, 10, 2, px, 0, AiImgSource);
-        
-        //tank.draw(3);
-        
+        Engine.render(tank);
+
         this.tankArr.push(tank);
+        
+        Engine.tankQueue.push(tank);
+        
         this.nowAmount++;
         this.totalAmount--;
-    },
-    
-    move : function(){
-
-        if(AI.tankArr.length > 0){
-            for(var i in AI.tankArr){
-                if(AI.tankArr[i].hp > 0){
-                    var random = Helpers.random(0,3);
-                    var derec = AI.fixDerec(AI.tankArr[i], random)
-                    AI.tankArr[i].move(derec);
-                }
-            }
-        }
-        
-        // if(AI.tankArr.length > 0){
-            // var AIProcess = setInterval(function(){
-                // for(var i in AI.tankArr){
-                    // var random = Helpers.random(0,3);
-                    // //增加智能  目的地坐标为 500,250
-                    // var derec = AI.fixDerec(AI.tankArr[i], random)
-                    // AI.tankArr[i].move(derec);
-                // }
-            // },1000);
-        // }
     },
     
     
@@ -279,6 +255,7 @@ var AI = {
         }
         return false;
     },
+    
     
     fixDerec : function(tank,derec){
         if(AI.needFix(tank,derec)){
@@ -334,7 +311,7 @@ var Game = {
             }
         }
         
-        
+        //console.log(Game.mapData);
         
         Engine.start();//启动引擎
     },
@@ -342,7 +319,6 @@ var Game = {
     //游戏开始
     start : function(){
         //Map.init();//初始化地图
-        
         //初始化玩家
         //var image = new Image();
         //image.src = "img/1-player1.png";
@@ -358,22 +334,19 @@ var Game = {
         );
         
         Engine.render(player1.tank);
-        player1.tank.moving = true;
-        
         Engine.tankQueue.push(player1.tank);
-        
         //初始化AI
         AI.init();
-        //AI.move();
     },
     
+    //控制
     controle : function(keycode){
         player1.controle(keycode);
     },
     
     //地图坐标与地图数组之间的相互转换
     position2Offset : function(x, y){
-        return {"i":x/25,"i":y/25};
+        return {"i":Math.floor(x/25),"j":Math.floor(y/25)};
     },
     
     ossfet2Position : function(i, j){
@@ -428,7 +401,7 @@ var Draw = {
 
 //辅助类
 /*
-* js的伪随机非常的不稳定
+* js的伪随机数非常的不稳定
 */
 var Helpers = {
     getBit: function(num){
@@ -458,19 +431,3 @@ var Helpers = {
         return binNum+min;
     }
 }
-
-
-// var zero = one = two = three = 0;
-// for(var i=0; i<=10000; i++){
-    // var n = Helpers.random(0,3);
-    // if(n == 0){
-        // zero++;
-    // }else if(n == 1){
-        // one++;
-    // }else if(n == 2){
-        // two++;
-    // }else if(n == 3){
-        // three++;
-    // }
-// }
-// console.log(zero,one,two,three);
