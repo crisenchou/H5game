@@ -24,9 +24,28 @@ var Engine = {
     work : function(){
         if(Engine.tankQueue.length > 0){
             for(var i in Engine.tankQueue){
+                console.log(Engine.tankQueue);
+                if(Engine.tankQueue[i].automove){
+                    Engine.tankQueue[i].moving =true;
+                    
+                    var derec = Helpers.random(0,3);
+                    
+                    if(AI.needFix(Engine.tankQueue[i], derec)){
+                        Engine.tankQueue[i].derec = AI.fixDerec(Engine.tankQueue[i], derec)
+                    }else{
+                        Engine.tankQueue[i].derec = derec;
+                    }
+                    
+                    Engine.tankQueue[i].distance = Helpers.random(1,5)*50;
+                    //Engine.cartoon(Engine.tankQueue[i]);
+                }
+                
                 if(Engine.tankQueue[i].moving == true){
+                    
                     Engine.cartoon(Engine.tankQueue[i]);
                 }
+               
+                //console.log(Engine.tankQueue);
             }
         }
     },
@@ -82,7 +101,6 @@ var Engine = {
     },
     
     checkCrash : function(x, y){
-        
         var offset = Game.position2Offset(x, y);
         console.log(offset);
         var access = Game.mapData[offset.i][offset.j];
@@ -135,6 +153,7 @@ var Tank = function(type, hp, derec, x, y, imgSource){
     this.size = 50;//坦克尺寸
     this.img = imgSource;
     this.moving = false;
+    this.automove = false;
     this.distance = 0;
     this.shoot = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
@@ -235,7 +254,7 @@ var AI = {
 
         var tank = new Tank(1, 10, 2, px, 0, AiImgSource);
         Engine.render(tank);
-
+        tank.automove = true;
         this.tankArr.push(tank);
         
         Engine.tankQueue.push(tank);
@@ -246,10 +265,14 @@ var AI = {
     
     
     needFix : function(tank,derec){
+        
+        
+        var Badgex = 250;
+        var Badgey = 550;
         //ai在老家的左边  方向朝左 || ai在大本营的的右边  方向朝右 || ai在老家的上方  方向朝上
-        if( tank.x < Badge.x && derec==0
-            || tank.x > Badge.x && derec==2
-            || tank.y < Badge.y && derec==1
+        if( tank.x < Badgex && derec==0
+            || tank.x > Badgex && derec==2
+            || tank.y < Badgey && derec==1
         ){
             return true;
         }
