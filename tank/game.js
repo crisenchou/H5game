@@ -12,6 +12,7 @@
 var Engine = {
     pid : 0,
     tankQueue : [],
+    bulletQueue : [],
     //process : [],//分配进程
     start : function(){
         this.loadMap();//加载地图
@@ -21,13 +22,16 @@ var Engine = {
         },100);
     },
     
+    pause : function(){
+        clearInterval(this.pid);
+    },
+    
     work : function(){
         if(Engine.tankQueue.length > 0){
             for(var i in Engine.tankQueue){
                 console.log(Engine.tankQueue);
                 if(Engine.tankQueue[i].automove){
                     Engine.tankQueue[i].moving =true;
-                    
                     var derec = Helpers.random(0,3);
                     
                     if(AI.needFix(Engine.tankQueue[i], derec)){
@@ -41,22 +45,33 @@ var Engine = {
                 }
                 
                 if(Engine.tankQueue[i].moving == true){
-                    
                     Engine.cartoon(Engine.tankQueue[i]);
                 }
-               
                 //console.log(Engine.tankQueue);
             }
         }
+        
+        
+        while(Engine.bulletQueue.length > 0){
+            var bullet = Engine.bulletQueue.shift();//弹药的特殊性 运行一遍之后消失  采用队列 调用渲染
+            Engine.cartoon(Engine.bulletQueue[i]);
+        }
+        
     },
     
     //动画效果
     cartoon : function(object){
         var derec = object.derec;
         if(0<=derec && 3>=derec){
-            Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
+            
+            //加载背景
+            //Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
             var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
-            if(!Engine.checkCrash(object.x+rule[derec].x, object.y+rule[derec].y)){
+            
+            var nextX = object.x+rule[derec].x;
+            var nextY = object.y+rule[derec].y;
+            
+            if(!Engine.checkCrash(nextX,nextY) && !Engine.checkEdge(nextX,nextY)){
                 object.x += rule[derec].x;
                 object.y += rule[derec].y;
                 object.distance--;
@@ -65,6 +80,7 @@ var Engine = {
             if(object.distance<=0){
                 object.moving = false;
             }
+            
             Engine.render(object);
         }
     },
@@ -100,16 +116,32 @@ var Engine = {
         }
     },
     
+    //碰撞检测
     checkCrash : function(x, y){
+        
+        if(x<0 || y<0){
+            return false;
+        }
+        
         var offset = Game.position2Offset(x, y);
-        console.log(offset);
         var access = Game.mapData[offset.i][offset.j];
+        
         if(access == 1){
             return true;
         }else{
             return false;
         }
-        
+    },
+    
+    //检测边界
+    checkEdge : function(x, y){
+        if(x<0 || x>Game.length){
+            return false;
+        }
+        if(y<0 || y>Game.width){
+            return false;
+        }
+        return true;
     }
 }
 
@@ -160,6 +192,8 @@ var Tank = function(type, hp, derec, x, y, imgSource){
         if(this.ammo > 0){
             //初始化子弹 以及子弹运动方向 子弹移动 
             var bullet = new Bullet(this,this.derec, 10);
+            
+            Engine.bulletQueue.push()
         }
 	}
 
@@ -185,7 +219,11 @@ var Tank = function(type, hp, derec, x, y, imgSource){
 
 //子弹
 var Bullet = function(speed, x, y, derec, damage){
-    //this.derec = derec || 1;
+    var imgSource = new Array(4);
+    for(var i=0;i<=3;i++){
+        imgSource[i] = new Img("img/"+i+"-bullet.jpg");
+    }
+    this.img = imgSource;
     this.speed = speed || 50;
     this.x = x;
     this.y = y;

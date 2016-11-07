@@ -21,6 +21,7 @@ body{
 </head>
 <body id="document">
 <h1>坦克</h1>
+<button onclick="pause()">暂停<button>
 <canvas id="myCanvas" width="550px" height="550px" ></canvas>
 </body>
 <script type="text/javascript" src="game.js"></script>
@@ -52,6 +53,10 @@ function keyPress(event)
     //if(event.keyCode >= 37 && event.keyCode<=40){
         Game.controle(event.keyCode)
     //}
+}
+
+function pause(){
+    Engine.pause();
 }
 
 </script>
