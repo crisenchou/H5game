@@ -29,7 +29,7 @@ var Engine = {
     work : function(){
         if(Engine.tankQueue.length > 0){
             for(var i in Engine.tankQueue){
-                console.log(Engine.tankQueue);
+                //console.log(Engine.tankQueue);
                 if(Engine.tankQueue[i].automove){
                     Engine.tankQueue[i].moving =true;
                     var derec = Helpers.random(0,3);
@@ -54,7 +54,7 @@ var Engine = {
         
         while(Engine.bulletQueue.length > 0){
             var bullet = Engine.bulletQueue.shift();//弹药的特殊性 运行一遍之后消失  采用队列 调用渲染
-            Engine.cartoon(Engine.bulletQueue[i]);
+            Engine.cartoon(bullet);
         }
         
     },
@@ -63,11 +63,8 @@ var Engine = {
     cartoon : function(object){
         var derec = object.derec;
         if(0<=derec && 3>=derec){
-            
-            //加载背景
-            //Draw.fillRect(object.x, object.y, object.size, object.size, Game.background);
+            Draw.clearRect(object.x, object.y, object.size, object.size);
             var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
-            
             var nextX = object.x+rule[derec].x;
             var nextY = object.y+rule[derec].y;
             
@@ -80,7 +77,6 @@ var Engine = {
             if(object.distance<=0){
                 object.moving = false;
             }
-            
             Engine.render(object);
         }
     },
@@ -158,9 +154,6 @@ var Map = function(){
 }
 
 
-
-
-
 //图像
 var Img = function(src){
     this.src = src;
@@ -168,7 +161,6 @@ var Img = function(src){
     img.src = this.src;
     return img;
 }
-
 
 //坦克
 var Tank = function(type, hp, derec, x, y, imgSource){
@@ -182,18 +174,18 @@ var Tank = function(type, hp, derec, x, y, imgSource){
     this.derec =  derec || 3;//方向
     this.x = x;
     this.y = y;
-    this.size = 50;//坦克尺寸
+    this.size = 25;//坦克尺寸
     this.img = imgSource;
-    this.moving = false;
+    this.moving = true;
     this.automove = false;
     this.distance = 0;
     this.shoot = function(){
         //发射子弹  坦克坐标赋值给子弹 子弹移动
         if(this.ammo > 0){
             //初始化子弹 以及子弹运动方向 子弹移动 
-            var bullet = new Bullet(this,this.derec, 10);
-            
-            Engine.bulletQueue.push()
+            var bullet = new Bullet(this.x,this.y,this.derec);
+            Engine.bulletQueue.push(bullet);
+            //console.log(this.derec)
         }
 	}
 
@@ -218,17 +210,19 @@ var Tank = function(type, hp, derec, x, y, imgSource){
 
 
 //子弹
-var Bullet = function(speed, x, y, derec, damage){
+var Bullet = function(x, y, derec, damage, speed){
     var imgSource = new Array(4);
     for(var i=0;i<=3;i++){
         imgSource[i] = new Img("img/"+i+"-bullet.jpg");
     }
     this.img = imgSource;
-    this.speed = speed || 50;
     this.x = x;
     this.y = y;
+    this.speed = speed || 50;
     this.damage = damage || 10;
     this.derec = derec;
+    this.distance = 500;
+    this.moving = false;
     this.size = 5;
     this.move = function(){
         Engine.cartoon(this);
@@ -256,14 +250,16 @@ var Player = function(tank){
         if(keycode<=40 && keycode>=37){
             this.move(keycode-37);
         }else if(keycode == 0){
-            this.tank.destroyed();
-            //this.shoot();
+            //console.log(this);
+            //this.tank.destroyed();
+            this.shoot();
         }else{
             console.log("assert false");
         }
     };
     
     this.shoot = function(){
+        console.log("shoot");
         this.tank.shoot();
     }
 }
