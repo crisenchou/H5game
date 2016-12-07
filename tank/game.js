@@ -15,8 +15,10 @@ var Engine = {
     bulletQueue : [],
     //process : [],//分配进程
     start : function(){
-        this.loadMap();//加载地图
-        this.renderMap();//渲染地图
+        var horizon = Game.width/Game.size;
+        var vertical = Game.height/Game.size
+        this.loadMap(horizon, vertical);//加载地图
+        this.renderMap(Map.resource);//渲染地图
         this.pid = setInterval(function(){
             Engine.work()
         },100);
@@ -51,40 +53,68 @@ var Engine = {
             }
         }
         
-        
-        while(Engine.bulletQueue.length > 0){
-            var bullet = Engine.bulletQueue.shift();//弹药的特殊性 运行一遍之后消失  采用队列 调用渲染
-            Engine.cartoon(bullet);
+        if(Engine.bulletQueue>0){
+            var bullet = Engine.bulletQueue.shift();
+            while(bullet.moving){
+                if(Engine.checkShoot(bullet)){
+                    bullet.moving = false;
+                }
+                Engine.cartoon(bullet);
+            }
         }
-        
     },
+    
+    checkShoot : function(bullet){
+        var nextPosition = Engine.getNextPosition(bullet);
+       
+        var nextX = nextPosition.x;
+        var nextY = nextPosition.y;
+        if(!Engine.checkCrash(nextX,nextY) && !Engine.checkEdge(nextX,nextY)){
+            bullet.x += nextX;
+            bullet.y += nextY;
+        }else{
+            bullet.moving = false;
+        }
+    },
+    
+    getNextPosition : function(object){
+        var derec = object.derec;
+        if(0<=derec && 3>=derec){
+            var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
+            var nextX = object.x+rule[derec].x;
+            var nextY = object.y+rule[derec].y;
+            return {"x":nextX,"y":nextY};
+        }
+        return false;
+    },
+    
+    
     
     //动画效果
     cartoon : function(object){
         var derec = object.derec;
         if(0<=derec && 3>=derec){
             Draw.clearRect(object.x, object.y, object.size, object.size);
-            var rule = [{"x":-1,"y":0},{"x":0,"y":-1},{"x":1,"y":0},{"x":0,"y":1}];
-            var nextX = object.x+rule[derec].x;
-            var nextY = object.y+rule[derec].y;
             
+            var nextPosition = Engine.getNextPosition(object);
+            var nextX = nextPosition.x;
+            var nextY = nextPosition.y;
             if(!Engine.checkCrash(nextX,nextY) && !Engine.checkEdge(nextX,nextY)){
-                object.x += rule[derec].x;
-                object.y += rule[derec].y;
+                object.x += nextX;
+                object.y += nextY;
                 object.distance--;
             }
 
             if(object.distance<=0){
                 object.moving = false;
             }
-            Engine.render(object);
+            Engine.renderObject(object);
         }
     },
     
 
-    //图片渲染
-    render : function(object){
-        //var img = this.resource.imgResource[object.imgResourceId];
+    //动态资源渲染
+    renderObject : function(object){
         var img = object.img[object.derec];
         Draw.drawImage(img, object.x, object.y, object.size, object.size)
     },
@@ -97,17 +127,22 @@ var Engine = {
             Map.resource[i] = new Array(vertical);
             for(var j=0;j<vertical;j++){
                 var barrier = Helpers.random(0,4);
+                //var barrier = 0;
                 Map.resource[i][j] = barrier;
             }
         }
+        
+
     },
     
     //渲染地图
     renderMap : function(map){
         for(var i in map){
             for(var j in map[i]){
-                var position =  Game.ossfet2Position(i,j);
-                Engine.render(map[i][j], position.x, position.y, Game.size);//渲染单位像素
+                var position =  Game.offset2Position(i,j);
+                var flag = map[i][j];
+                var img = Game.barriers[flag]
+                Draw.drawImage(img,  position.x, position.y, Game.size, Game.size)
             }
         }
     },
@@ -120,7 +155,7 @@ var Engine = {
         }
         
         var offset = Game.position2Offset(x, y);
-        var access = Game.mapData[offset.i][offset.j];
+        var access = Map.resource[offset.i][offset.j];
         
         if(access == 1){
             return true;
@@ -223,7 +258,7 @@ var Bullet = function(x, y, derec, damage, speed){
     this.derec = derec;
     this.distance = 500;
     this.moving = false;
-    this.size = 5;
+    this.size = 20;
     this.move = function(){
         Engine.cartoon(this);
     };
@@ -287,7 +322,7 @@ var AI = {
         }
 
         var tank = new Tank(1, 10, 2, px, 0, AiImgSource);
-        Engine.render(tank);
+        Engine.renderObject(tank);
         tank.automove = true;
         this.tankArr.push(tank);
         
@@ -337,7 +372,6 @@ var Game = {
     width : 550,
     background : "black",
     size : 25,
-    mapData : null,//地图数据
     barriers : [],
     //游戏初始化
     init : function(canvas){
@@ -351,25 +385,7 @@ var Game = {
         for(var i=0;i<=4;i++){
             Game.barriers[i] = new Img("img/"+(i+1)+"-barrier.jpg");
         }
-        
 
-        var horizon = Game.width/Game.size;
-        var vertical = Game.height/Game.size
-        Game.mapData = new Array(horizon);
-        for(var i=0;i<horizon;i++){
-            Game.mapData[i] = new Array(vertical);
-            for(var j=0;j<vertical;j++){
-                var barrier = Helpers.random(0,4);
-                Game.mapData[i][j] = barrier;
-                var position = Game.ossfet2Position(i,j);
-                var imgsource = Game.barriers[barrier]
-                //console.log(imgsource);
-                Draw.drawImage(imgsource, position.x, position.y, Game.size, Game.size);
-            }
-        }
-        
-        //console.log(Game.mapData);
-        
         Engine.start();//启动引擎
     },
     
@@ -390,7 +406,7 @@ var Game = {
             new Tank(type,hp,derec,150, (Game.height-2*Game.size) ,playerImgSource)
         );
         
-        Engine.render(player1.tank);
+        Engine.renderObject(player1.tank);
         Engine.tankQueue.push(player1.tank);
         //初始化AI
         AI.init();
@@ -406,7 +422,7 @@ var Game = {
         return {"i":Math.floor(x/25),"j":Math.floor(y/25)};
     },
     
-    ossfet2Position : function(i, j){
+    offset2Position : function(i, j){
         return {"x":25*i,"y":25*j};
     }
 }
