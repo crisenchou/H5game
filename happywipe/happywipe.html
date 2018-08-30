@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>消消乐</title>
+<meta charset="utf-8" />
+<style>
+
+body{
+    width: 800px;
+    margin: 0 auto;
+    position:absolute;
+    
+}
+
+
+
+#myCanvas{
+    margin-top: 100px;
+}
+
+</style>
+</head>
+<body>
+<h1>消消乐</h1>
+<p>得分：<b id="score">0</b>分</p>
+<div>
+    <input type="button" id="change" value="开始游戏" onclick="start()" />
+    <input type="button" id="change" value="重新开始" onclick="restart()" />
+    <input type="button" id="change" value="暂停游戏" onclick="pause()" />
+</div>
+<canvas id="myCanvas" width="500px" height="500px" ></canvas>
+</body>
+<script type="text/javascript" src="game.js"></script>
+<script type="text/javascript">
+
+
+Game.init('myCanvas');
+
+function start(){
+	Game.start();
+}
+
+function restart(){
+    Game.restart();
+}
+
+</script>
+</html> 

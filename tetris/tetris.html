@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>俄罗斯方块</title>
+<meta charset="utf-8" />
+<style>
+
+body{
+    width: 800px;
+    margin: 0 auto;
+}
+</style>
+</head>
+<body id="document" onkeyup="showKeyCode(event)">
+<h1>俄罗斯方块</h1>
+<p>使用键盘的方向键可以控制</p>
+<p>得分：<b id="score">0</b>分</p>
+<p>速度：<b id="speed">1</b></p>
+<input type="button"  value="调整难度" onclick="speed()" />
+<div>
+    <input type="button" id="change" value="开始游戏" onclick="start()" />
+    <input type="button" id="change" value="重新开始" onclick="restart()" />
+    <input type="button" id="change" value="暂停游戏" onclick="pause()" />
+</div>
+<canvas id="myCanvas" width="600px" height="600px"></canvas>
+</body>
+<script type="text/javascript" src="game.js"></script>
+<script type="text/javascript">
+window.onload=function(){ 
+	document.getElementById('document').keyup = showKeyCode;
+    document.getElementById('document').onkeypress = press;
+    
+} 
+
+game.init('myCanvas');
+function showKeyCode(event)
+{
+    //37 左箭头   39右箭头  38上箭头  40 下箭头  32空格
+    if(event.keyCode == 32){
+		game.status == 1 ? game.pause() : game.start();
+    }else if(event.keyCode >= 37 && event.keyCode<=40){
+        var derec = { 37 : "left",38 : "up",39 : "right",40 : "down"}
+        game.control(derec[event.keyCode]);
+    }
+}
+
+function press(event){
+    if(event.keyCode >= 37 && event.keyCode==39){
+        var derec = { 37 : "left",38 : "up",39 : "right",40 : "down"}
+        setTimeout(game.control(derec[event.keyCode]),2000)
+    }
+}
+
+function start(){
+	game.start();
+}
+function restart(){
+    game.restart();
+}
+function pause(){
+    game.pause();
+}
+
+function speed(){
+    var speed =  document.getElementById("speed").innerHTML;
+    speed = parseInt(speed)+1;
+    if(speed > 5){
+        speed = 0;
+    }
+    document.getElementById("speed").innerHTML = speed;
+    game.level = speed;
+}
+</script>
+</html> 
